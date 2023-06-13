@@ -165,7 +165,7 @@ class CLIProgram:
             elif parts[0] == "load" and len(parts) == 2:
                 file_arg = parts[1]
                 self.load_file(file_arg)
-            elif parts[0] == "test":
+            elif parts[0] == "test" and self.dfa:
                 arguments = ' '.join(parts[1:])
                 self.test_function(arguments)
             elif parts[0] == "lastpath" and self.dfa:
