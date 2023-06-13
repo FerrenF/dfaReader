@@ -2,38 +2,64 @@ import json
 import os
 import sys
 
-# DFA Reader Command Line Application
-# This program reads a deterministic finite automaton from a file and then allows
-# the user to test strings against it and track routes through an automaton.
+# DFA/NFA Reader Command Line Application
+# This program reads a finite automaton from a file and then allows
+# the user to test strings against it and track routes through.
+
+# FAObj -> DFAObject
+#       -> NFAObject
 
 
-# DFAObj -> DFAFromFile
-# This object stores information about a deterministic finite automaton.
-# It's not a new method of doing so, but it is the simplest by far.
-# Other ways this could be implemented: a regular list, a linked list, a directional graph, an
-# AnyTree with a little finagle, or even a vector database. That's an interesting idea.
+# This object stores information about a finite automaton.
+# It can handle a DFA or a NFA
+# We use seperate chaining in order to handle hash collisions (where a state has more than one possible exit)
 
-class DFAObject:
+
+class FAObject:
+
+    def is_nfa(self):
+        return self.isNFA
+    def num_transitions(self, source_state, input_symbol):
+        if not self.has_transition(source_state,input_symbol):
+            return 0
+        return len(self.transitions[(source_state, input_symbol)])
+
+    def get_transitions(self, source_state, input_symbol):
+        if self.has_transition(source_state,input_symbol):
+            return self.transitions[(source_state, input_symbol)]
+        return False
 
     def has_transition(self, source_state, input_symbol):
         return (source_state, input_symbol) in self.transitions.keys()
 
+    def run_machine(self, start_state, input_string, path=None):
+
+        if not path:
+            path = list()
+        if len(input_string):
+            if not self.has_transition(start_state, input_string[0]):
+                return False
+            target_states = self.get_transitions(start_state, input_string[0])
+
+            truths = []
+            for target_state in target_states:
+                # Only one truth in our table needs to be true for the string to be valid.
+                truths.append(self.run_machine(target_state, input_string[1:], path+[(start_state, input_string[0], target_state)]))
+            if True in truths:
+                return True
+        else:
+            if start_state in self.accept_states:
+                # If we are here, then we are at the end of the string and also in a state which we can accept. Ding ding ding.
+                self.last_path = path + [(start_state, "", "accept")]
+                return True
+        return False
+
     def test_string(self, input_string):
         self.last_path.clear()
 
-        def ap_exit(cs, ch):
-            self.last_path.append({(cs, ch): "none"})
-            return False
 
-        current_state = self.start_state
-        for char in input_string:
-            if not self.has_transition(current_state, char):
-                ap_exit(current_state,char)
-                return False
-            target_state = self.transitions[(current_state, char)]
-            self.last_path.append({(current_state, char): target_state})
-            current_state = target_state
-        return current_state in self.accept_states or ap_exit(current_state, input_string[-1:])
+
+        return self.run_machine(self.start_state, input_string)
 
     # To a more usable library this should be split by its function but it is useful to both read and format here
     # print_last_path prints a human friendly readout of the last path taken through the network of all possibilities in
@@ -41,31 +67,30 @@ class DFAObject:
     def print_last_path(self):
         result = []
         step = 0
-        for dictionary in self.last_path:
-            step += 1
+        for (start_state, input_string, target_state) in self.last_path:
 
+            step += 1
             start_string = 'start ' if step == 1 else ''
             finalize_string = ''
-
-            for (key, value) in dictionary.items():
-                if step == len(self.last_path):
-                    finalize_string = 'and is '
-                    if value.strip() == 'none':
-                        finalize_string += 'rejected'
-                    else:
-                        finalize_string += 'accepted'
-                result.append(f"{step}: {start_string}state {' input '.join(map(str, key))} moves to state {value} {finalize_string}")
-
+            if step == len(self.last_path):
+                finalize_string = 'and is '
+                if target_state == 'accept':
+                    finalize_string += 'accepted'
+                else:
+                    finalize_string += 'rejected'
+            result.append(
+                    f"{step}: {start_string}state {start_state} takes input '{input_string}'"
+                    f" and moves to state {target_state} {finalize_string}")
         return result
 
-    def __init__(self, alphabet, all_states, start_state, accept_states, transitions=None):
+    def __init__(self, alphabet, all_states, start_state, accept_states, transitions=None, isNFA=False):
         self.start_state = start_state
         self.accept_states = accept_states
         self.transitions = transitions or {}
         self.last_path = []
         self.alphabet = alphabet
         self.states = all_states
-
+        self.isNFA = isNFA
         # Prints the information that makes up this object. This can get pretty unreadable so we use
         # built-in json functions to prettyprint it.
 
@@ -77,8 +102,7 @@ class DFAObject:
             "transitions": [f"{':'.join(map(str, key))}->{value}" for key, value in self.transitions.items()]
         }, separators=(',', '='), indent=1)
 
-# A convenience class to initialize a DFAObj directly from a file path.
-class DFAFromFile(DFAObject):
+class FAFromFile(FAObject):
     def __init__(self, file_path):
         with open(file_path, 'r') as file:
             lines = [line.strip() for line in file.readlines()]
@@ -88,17 +112,22 @@ class DFAFromFile(DFAObject):
         start_state = lines[2]
         accept_states = lines[3][1:-1].split(',')
         transitions = {}
-
+        collision = False
         for line in lines[4:]:
             parts = line.split('->')
             input_function = parts[0][1:-1].split(',')
             source_state = input_function[0]
             input_symbol = input_function[1]
             destination_state = parts[1]
-            transitions[(source_state, input_symbol)] = destination_state
+            if (source_state, input_symbol) in transitions:
+                # We have a hash collision and must start separate chaining destination states.
+                # This means that the object we are reading is actually an NFA, so we flag it to specify such.
+                collision = True
+                transitions[(source_state, input_symbol)].append(destination_state)
+            else:
+                transitions[(source_state, input_symbol)] = [destination_state]
 
-        super().__init__(alphabet, states, start_state, accept_states, transitions)
-
+        super().__init__(alphabet, states, start_state, accept_states, transitions, isNFA=collision)
 
 class CLIProgram:
 
@@ -111,6 +140,7 @@ class CLIProgram:
             self.process_command(command)
 
     def process_command(self, command):
+
         parts = command.split()
         if len(parts) > 0:
             if parts[0] == "exit":
@@ -129,10 +159,10 @@ class CLIProgram:
             elif parts[0] == "help":
                 print("Available commands:")
                 print("exit: Exit the program.")
-                print("load <file_path>: Load a DFA from a text file.")
-                print("test <input_string>: Test an input string against the loaded DFA.")
-                print("lastpath: Print the last path used to process a string through the DFA.")
-                print("info: Print information about the loaded DFA.")
+                print("load <file_path>: Load a DFA/NFA from a text file.")
+                print("test <input_string>: Test an input string against the loaded DFA/NFA.")
+                print("lastpath: Print the last path used to process a string through the DFA/NFA.")
+                print("info: Print information about the loaded DFA/NFA.")
             else:
                 print("Invalid command.")
 
@@ -140,22 +170,23 @@ class CLIProgram:
         if not os.path.exists(fa):
             print("Error: File does not exist")
             return
-        self.dfa = DFAFromFile(fa)
-        print("DFA Loaded: "+fa)
+        self.dfa = FAFromFile(fa)
+        self.falabel = "NFA" if self.dfa.is_nfa() else "DFA"
+        print(self.falabel + " Loaded: "+fa)
 
     def test_function(self, arguments):
         print("Testing function with string:", arguments)
         is_accepted = self.dfa.test_string(arguments)
 
         if is_accepted:
-            print("String accepted by the DFA.")
+            print(f"String accepted by the {self.falabel}.")
         else:
-            print("String not accepted by the DFA.")
+            print(f"String not accepted by the {self.falabel}.")
 
     def __init__(self, **kwargs):
         self.running = False
         self.dfa = None
-
+        self.falabel = None
         if "file" in kwargs:
             self.load_file(kwargs["file"])
             if "test" in kwargs:

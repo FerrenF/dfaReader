@@ -1,61 +1,124 @@
-# DFA Reader Command Line Application
+# Finite Automaton Reader Command Line Application
 
-This is a command-line application that allows you to read and interact with a deterministic finite automaton (DFA). The program enables you to test strings against the DFA and track the routes through the automaton.
+This command-line application allows you to read and test strings against deterministic finite automata (DFAs) and non-deterministic finite automata (NFAs) stored in a file. It also provides functionality to track routes through the automaton.
 
-## How to Use
+## Prerequisites
 
-To run the program, execute the following command:
+Make sure you have the following dependencies installed:
 
-```python
-python <filename>.py [file_path] [input_string]
+- Python 3.x
+
+## Installation
+
+1. Clone the repository:
+
+```shell
+git clone <repository_url>
 ```
 
-If `file_path` and `input_string` are not provided, you can load the DFA and interact with it through the command-line interface.
+2. Navigate to the project directory:
 
-## Commands
+```shell
+cd <project_directory>
+```
 
-The following commands are available:
+3. (Optional) Create and activate a virtual environment:
+
+```shell
+python -m venv venv
+source venv/bin/activate
+```
+
+4. Install the required dependencies:
+
+```shell
+pip install -r requirements.txt
+```
+
+## Usage
+
+You can use the application through the command-line interface. Available commands are:
 
 - `exit`: Exit the program.
-- `load <file_path>`: Load a DFA from a text file.
-- `test <input_string>`: Test an input string against the loaded DFA.
-- `lastpath`: Print the last path used to process a string through the DFA.
-- `info`: Print information about the loaded DFA.
+- `load <file_path>`: Load a DFA/NFA from a text file.
+- `test <input_string>`: Test an input string against the loaded DFA/NFA.
+- `lastpath`: Print the last path used to process a string through the DFA/NFA.
+- `info`: Print information about the loaded DFA/NFA.
 - `help`: Display the list of available commands.
 
-## DFAObject Class
+To run the application, execute the following command:
 
-The `DFAObject` class represents a deterministic finite automaton. It stores information about the DFA, such as the alphabet, states, start state, accept states, and transitions.
+```shell
+python <filename.py>
+```
 
-### Methods
+Replace `<filename.py>` with the name of the Python file containing the code.
 
-- `has_transition(source_state, input_symbol)`: Checks if a transition exists from the `source_state` with the given `input_symbol`.
-- `test_string(input_string)`: Tests the `input_string` against the DFA and returns `True` if it is accepted, `False` otherwise.
-- `print_last_path()`: Prints a human-friendly readout of the last path taken through the DFA during the last test.
-- `__str__()`: Returns a string representation of the DFA object.
+### Examples
 
-## DFAFromFile Class
+Here are some examples of how to use the application:
 
-The `DFAFromFile` class is a convenience class that initializes a `DFAObject` directly from a file path. It reads the DFA information from the file and creates the DFA object accordingly.
+- Load a DFA/NFA from a file:
 
-### Method
+  ```shell
+  load example.txt
+  ```
 
-- `__init__(file_path)`: Initializes the DFA object by reading the DFA information from the specified `file_path`.
+  Replace `example.txt` with the path to the file containing the automaton.
 
-## CLIProgram Class
+- Test an input string against the loaded DFA/NFA:
 
-The `CLIProgram` class represents the command-line interface for the DFA reader application.
+  ```shell
+  test abc
+  ```
 
-### Methods
+  Replace `abc` with the input string you want to test.
 
-- `start()`: Starts the command-line interface and waits for user commands.
-- `process_command(command)`: Processes the user command and performs the corresponding action.
-- `load_file(file_path)`: Loads a DFA from the specified `file_path`.
-- `test_function(arguments)`: Tests the `arguments` string against the loaded DFA.
-- `__init__(**kwargs)`: Initializes the CLI program, optionally loading a DFA file and performing a test.
+- Print the last path used to process a string through the DFA/NFA:
 
-Note: The code provided at the end of the README allows for running the program from the command line with optional file and input string arguments.
+  ```shell
+  lastpath
+  ```
 
----
+- Print information about the loaded DFA/NFA:
 
-This README provides a brief overview of the DFA reader command-line application. For more detailed information, please refer to the code comments and the class and method documentation within the source code.
+  ```shell
+  info
+  ```
+
+- Exit the program:
+
+  ```shell
+  exit
+  ```
+
+## File Format
+
+The DFA/NFA file should follow a specific format. Here is an example of the format:
+
+```
+Alphabet: a,b,c
+States: q0,q1,q2,q3
+Start State: q0
+Accept States: q3
+Transitions:
+(q0,a)->q1
+(q1,b)->q2
+(q2,c)->q3
+```
+
+- The `Alphabet` line lists the symbols in the alphabet, separated by commas.
+- The `States` line lists all the states in the automaton, separated by commas.
+- The `Start State` line specifies the start state of the automaton.
+- The `Accept States` line lists the accept states of the automaton, separated by commas.
+- The `Transitions` section defines the transitions between states. Each transition is specified on a separate line in the format `(source_state,input_symbol)->target_state`.
+
+Note: For NFAs, if a state has more than one possible exit for the same input symbol, simply list it as such.
+
+## License
+
+This project is licensed under the [MIT License](LICENSE).
+
+## Acknowledgments
+
+This application was developed using the DFA/NFA object implementation provided in the code.
