@@ -104,18 +104,35 @@ class FAObject:
 
 class FAFromFile(FAObject):
     def __init__(self, file_path):
+
+        self.source = file_path
         with open(file_path, 'r') as file:
             lines = [line.strip() for line in file.readlines()]
-
+        if len(lines) < 4:
+            print(
+                "This might not be a working machine. Creating a default machine with dfa.txt instead.")
+            self.__init__("dfa.txt")
+            self.source = "dfa.txt"
+            return
         alphabet = lines[0][1:-1].split(',')
         states = lines[1][1:-1].split(',')
         start_state = lines[2]
         accept_states = lines[3][1:-1].split(',')
         transitions = {}
         collision = False
+        index = 5
+
         for line in lines[4:]:
             parts = line.split('->')
+            if len(parts) < 2:
+                print("Bad transition entry found at line " + index.__str__() + ". Discarding this line. WARNING: you may not have a working machine.")
+                continue
+            index += 1
             input_function = parts[0][1:-1].split(',')
+            if len(input_function) < 2:
+                print(
+                    "Bad transition entry found at line " + index.__str__() + ". Discarding this line. WARNING: you may not have a working machine.")
+                continue
             source_state = input_function[0]
             input_symbol = input_function[1]
             destination_state = parts[1]
@@ -172,7 +189,7 @@ class CLIProgram:
             return
         self.dfa = FAFromFile(fa)
         self.falabel = "NFA" if self.dfa.is_nfa() else "DFA"
-        print(self.falabel + " Loaded: "+fa)
+        print(self.falabel + " Loaded: "+self.dfa.source)
 
     def test_function(self, arguments):
         print("Testing function with string:", arguments)
