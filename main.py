@@ -52,6 +52,9 @@ class FAObject:
                 # If we are here, then we are at the end of the string and also in a state which we can accept. Ding ding ding.
                 self.last_path = path + [(start_state, "", "accept")]
                 return True
+            else:
+                # We still pass our path in, but it wasn't accepted so we don't add the accept state
+                self.last_path = path;
         return False
 
     def test_string(self, input_string):
