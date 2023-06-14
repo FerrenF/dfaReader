@@ -142,8 +142,13 @@ class FAFromFile(FAObject):
             if (source_state, input_symbol) in transitions:
                 # We have a hash collision and must start separate chaining destination states.
                 # This means that the object we are reading is actually an NFA, so we flag it to specify such.
+                if not collision:
+                    print(
+                        f"NFA flag set due to duplicate state found at -> {source_state} : {input_symbol} on line {index} Ignoring future messages ")
                 collision = True
                 transitions[(source_state, input_symbol)].append(destination_state)
+
+
             else:
                 transitions[(source_state, input_symbol)] = [destination_state]
 
