@@ -94,17 +94,16 @@ Here are some examples of how to use the application:
 
 ## File Format
 
-The DFA/NFA file should follow a specific format. Here is an example of the format:
+The DFA/NFA file should follow a specific format. Here is an example of the format (labels omitted):
 
 ```
-Alphabet: a,b,c
-States: q0,q1,q2,q3
-Start State: q0
+Alphabet:      a,b,c
+States:        q0,q1,q2,q3
+Start State:   q0
 Accept States: q3
-Transitions:
-(q0,a)->q1
-(q1,b)->q2
-(q2,c)->q3
+Transitions:   (q0,a)->q1
+               (q1,b)->q2
+               (q2,c)->q3
 ```
 
 - The `Alphabet` line lists the symbols in the alphabet, separated by commas.
