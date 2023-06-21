@@ -40,7 +40,7 @@ class FAObject:
             result = consume_symbol in search_target
         return result
 
-    def run_machine(self, start_state, input_string, input_consume=None, path=None, stack=None):
+    def run_machine(self, start_state, input_string, path=None, stack=None):
 
         if not path:
             path = list()
@@ -114,7 +114,7 @@ class FAObject:
                     result = False
                     if not trapped:
                         next_input = input_string[1:] if input_consume_symbol is not None else input_string
-                        result = self.run_machine(target_state, next_input, input_consume_symbol, path + this_route, next_stack)
+                        result = self.run_machine(target_state, next_input, path + this_route, next_stack)
                     truths.append(result)
             # Only one truth in our table needs to be true for the string to be valid.
             if True in truths:
@@ -137,7 +137,7 @@ class FAObject:
                             next_stack.append(push_symbol)
 
                         this_route = [(start_state, None, state_name, stack_read, push_symbol)]
-                        return self.run_machine(target_state[0], input_string, None, path + this_route, next_stack)
+                        return self.run_machine(target_state[0], input_string, path + this_route, next_stack)
 
             # The stack is empty if we are here, time to check if we are in a winning state too
             if start_state in self.accept_states:
@@ -350,7 +350,8 @@ class CLIProgram:
             else:
                 print("Invalid command.")
     def fa_label(self):
-        return ("N-" if self.dfa.is_nfa is True else "D-") + ("PDA" if self.dfa.is_pda else "FA");
+
+        return str("N-" if self.dfa.is_nfa() is True else "D-") + ("PDA" if self.dfa.is_pda() is True else "FA")
     def load_file(self, fa):
         if not os.path.exists(fa):
             print("Error: File does not exist")
