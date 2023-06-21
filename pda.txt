@@ -1,0 +1,11 @@
+{0,1}  // Alphabet
+{0,1} // Stack Alphabet
+{q1,q2,q3,q4} // All States
+q1 // Initial State
+{q4} // Accept States
+(q1,):(,$)->q2 // (Source_State, Input Symbol):(Consume_Symbol, Push_Symbol) -> Result_State
+(q2,0):(,0)->q2
+(q2,1):(0,)->q3
+(q3,1):(0,)->q3
+(q3,):($,)->q4 // Final state
+(q4,):(,)->q4 // Accept State
