@@ -1,12 +1,13 @@
 {a,b}  // Alphabet
-{a,b} // Stack Alphabet
+{a,b,$} // Stack Alphabet
 {q1,q2,q3,q4,q5} // All States
 q1 // Initial State
 {q5} // Accept States
 (q1,):(,$)->q2 // (Source_State, Input Symbol):(Consume_Symbol, Push_Symbol) -> Result_State
-(q2,a):(,a)->q2
-(q2,1):(0,)->q3
-(q3,1):(0,)->q3
-(q3,):($,)->q4 // Final state
-(q4,):(,)->q4 // Accept State
-// This file is incomplete, to be completed when I make it such that the program will allow multiple symbols to be pushed.
+(q2,a):(,)->q3
+(q3,a):(,bbb)->q2
+(q2,):(,)->q4
+(q4,b):(b,)->q4
+(q4,):($,)->q5
+(q5,):(,)->q5
+// This file represents the language L = a ^ 2n b ^ 3n | n > 0

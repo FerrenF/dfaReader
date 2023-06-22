@@ -99,7 +99,7 @@ class FAObject:
                     push_symbol = target_func[1]
 
                     if self.is_pda() and push_symbol is not None:
-                        next_stack.append(push_symbol)
+                        next_stack += list(push_symbol)
 
 
                     this_route = [(start_state, input_consume_symbol, target_state, stack_consume_symbol, push_symbol)]
@@ -108,7 +108,7 @@ class FAObject:
                     trapped = False
                     # Assuming 'n' is the number of entries to check
                     if len(path) > 10:
-                        last_n_entries = path[-5:]  # Get the last 'n' entries from the 'paths' list
+                        last_n_entries = path[-10:]  # Get the last 'n' entries from the 'paths' list
                         # Compare each entry with the new one
                         is_equivalent = all(entry == this_route[0] for entry in last_n_entries)
                         # Check if all entries are equivalent
@@ -157,7 +157,6 @@ class FAObject:
                     truths.append(self.run_machine(target_state[0], input_string, path + this_route, next_stack))
                 if True in truths:
                     return True
-
         return False
 
     def test_string(self, input_string):

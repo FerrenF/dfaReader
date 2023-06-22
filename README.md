@@ -4,10 +4,9 @@ This command-line application allows you to read and test strings against finite
 
 ## Caveats
 
-The alphabet can not consist of words. Only single characters may exist in the alphabet. I will probably fix this.
+The alphabet can not consist of words. Only single characters may exist in the alphabet.
 
-You can not push or consume multiple symbols at once. This makes for tedious programming of machines using the file format included.
-This will definitely be changed.
+You can push multiple symbols at once, however you cannot consume multiple symbols at once.
 
 ## Prerequisites
 
