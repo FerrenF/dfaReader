@@ -4,9 +4,9 @@
 q1 // Initial State
 {q5} // Accept States
 (q1,):(,$)->q2 // (Source_State, Input Symbol):(Consume_Symbol, Push_Symbol) -> Result_State
-(q2,0):(,0)->q2
+(q2,a):(,a)->q2
 (q2,1):(0,)->q3
 (q3,1):(0,)->q3
 (q3,):($,)->q4 // Final state
 (q4,):(,)->q4 // Accept State
-// The language this PDA accepts is L = {0 ^ n 1 ^ n | n > 0}
+// This file is incomplete, to be completed when I make it such that the program will allow multiple symbols to be pushed.

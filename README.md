@@ -1,6 +1,13 @@
 # Finite Automaton Reader Command Line Application
 
-This command-line application allows you to read and test strings against deterministic finite automata (DFAs) and non-deterministic finite automata (NFAs) stored in a file. It also provides functionality to track routes through the automaton.
+This command-line application allows you to read and test strings against finite automatons. It supports deterministic finite automatons (DFA), non-deterministic finite automatons (NFA), and pushdown automatons (PDA).
+
+## Caveats
+
+The alphabet can not consist of words. Only single characters may exist in the alphabet. I will probably fix this.
+
+You can not push or consume multiple symbols at once. This makes for tedious programming of machines using the file format included.
+This will definitely be changed.
 
 ## Prerequisites
 
@@ -29,12 +36,6 @@ python -m venv venv
 source venv/bin/activate
 ```
 
-4. Install the required dependencies:
-
-```shell
-pip install -r requirements.txt
-```
-
 ## Usage
 
 You can use the application through the command-line interface. Available commands are:
@@ -58,7 +59,7 @@ Replace `<filename.py>` with the name of the Python file containing the code.
 
 Here are some examples of how to use the application:
 
-- Load a DFA/NFA from a file:
+- Load an automaton from a file:
 
   ```shell
   load example.txt
@@ -66,7 +67,7 @@ Here are some examples of how to use the application:
 
   Replace `example.txt` with the path to the file containing the automaton.
 
-- Test an input string against the loaded DFA/NFA:
+- Test an input string against the loaded automaton:
 
   ```shell
   test abc
@@ -74,13 +75,13 @@ Here are some examples of how to use the application:
 
   Replace `abc` with the input string you want to test.
 
-- Print the last path used to process a string through the DFA/NFA:
+- Print the last path used to process a string through the automaton:
 
   ```shell
   lastpath
   ```
 
-- Print information about the loaded DFA/NFA:
+- Print information about the loaded automaton:
 
   ```shell
   info
@@ -94,13 +95,15 @@ Here are some examples of how to use the application:
 
 ## File Format
 
-The DFA/NFA file should follow a specific format. Here is an example of the format (labels omitted):
+The automaton file should follow a specific format. Here is an example of the format (labels omitted):
 
+An example format of a simple deterministic automaton would be as follows.
+Multiple examples are included (pda.txt, marmalade.txt, and threezeros.txt)
 ```
-Alphabet:      a,b,c
-States:        q0,q1,q2,q3
+Alphabet:      {a,b,c}
+States:        {q0,q1,q2,q3}
 Start State:   q0
-Accept States: q3
+Accept States: {q3}
 Transitions:   (q0,a)->q1
                (q1,b)->q2
                (q2,c)->q3
@@ -112,7 +115,19 @@ Transitions:   (q0,a)->q1
 - The `Accept States` line lists the accept states of the automaton, separated by commas.
 - The `Transitions` section defines the transitions between states. Each transition is specified on a separate line in the format `(source_state,input_symbol)->target_state`.
 
-Note: For NFAs, if a state has more than one possible exit for the same input symbol, simply list it as such.
+The format gets more complex for pushdown automatons:
+An example is included in pda.txt. It's the same as below:
+
+```
+{0,1}  // Alphabet
+{0,1} // Stack Alphabet
+{q1,q2,q3,q4} // All States
+q1 // Initial State
+{q4} // Accept States
+(q1,):(,$)->q2 // (Source_State, Input Symbol):(Consume_Symbol, Push_Symbol) -> Result_State
+(q2,):($,)->q4 // Accepts nothing too. Straight to pre-accept state.
+```
+- The consume symbol is the same as a 'pop' operation on the stack.
 
 ## License
 

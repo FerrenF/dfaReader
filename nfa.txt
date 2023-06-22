@@ -6,3 +6,4 @@ q0
 (q0,0)->q1
 (q0,0)->q0
 (q1,1)->q2
+// This machine accepts the language of words ending in 01
