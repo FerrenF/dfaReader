@@ -4,9 +4,10 @@
 q1 // Initial State
 {q4} // Accept States
 (q1,):(,$)->q2 // (Source_State, Input Symbol):(Consume_Symbol, Push_Symbol) -> Result_State
+(q2,):($,)->q4 // Accepts nothing too. Straight to pre-accept state.
 (q2,0):(,0)->q2
 (q2,1):(0,)->q3
 (q3,1):(0,)->q3
 (q3,):($,)->q4 // Final state
 (q4,):(,)->q4 // Accept State
-// This line is actually a description line. The language this PDA accepts is L = {0 ^ n 1 ^ n | n > 0}
+// This line is actually a description line. The language this PDA accepts is L = {0 ^ n 1 ^ n | n >= 0}

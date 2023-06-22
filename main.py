@@ -50,7 +50,7 @@ class FAObject:
         # We read the top of the stack in any case. If it's not a PDA, then it's None. If the stack is empty, it's none.
         stack_read = stack[-1] if (self.is_pda() and len(stack) > 0) else None
 
-        if len(input_string):
+        if len(input_string) > 0:
 
             target_jobs = []
             if self.has_transition(start_state, input_string[0], None):
@@ -85,6 +85,11 @@ class FAObject:
                 next_stack = stack
 
                 if stack_consume_symbol is not None:
+                    if len(next_stack) == 0:
+                        # We have a dead end. The only route needs to consume something on the stack and the stack is empty.
+                        truths.append(False)
+                        continue
+
                     # We consume here and assume the symbol matches the top of the stack.
                     # Perhaps there should be some error checking there.
                     stack_consume_symbol = next_stack.pop()
@@ -123,31 +128,36 @@ class FAObject:
         else:
             # len is zero
             # If we are here, then we are at the end of the string. That doesn't necessarily mean we are done.
-            if stack_read is not None:
-                if self.has_transition(start_state, None, stack_read):
-                    next_stack = stack
-                    if len(next_stack) > 0:
-                        next_stack.pop()
-                    # we have a transition for state with no input and with consume matching the top of the stack.
-                    target_states = self.get_transitions(start_state, None, stack_read)
-                    for target_state in target_states:
-                        state_name = target_state[0]
-                        push_symbol = target_state[1]
-                        if push_symbol is not None:
-                            next_stack.append(push_symbol)
+            # It could also be an empty string.
 
-                        this_route = [(start_state, None, state_name, stack_read, push_symbol)]
-                        return self.run_machine(target_state[0], input_string, path + this_route, next_stack)
-
-            # The stack is empty if we are here, time to check if we are in a winning state too
-            if start_state in self.accept_states:
+            # First, let's check if we are in a winning state and the stack is empty. Then we might really be done.
+            if start_state in self.accept_states and stack_read is None:
                 # If we are here, then we are at the end of the string and also in a state which we can accept. Ding ding ding.
-                # It would be a good idea to notify the loop that we can quit early
+                # TODO: It would be a good idea to notify the loop that we can quit early.
                 self.last_path = path + [(start_state, "", "accept", None, None)]
                 return True
             else:
                 # We still pass our path in, but it wasn't accepted so we don't add the accept state
                 self.last_path = path
+
+            if self.has_transition(start_state, None, stack_read):
+                next_stack = stack
+                if len(next_stack) > 0 and stack_read is not None:
+                    next_stack.pop()
+                # we have a transition for state with no input and with consume matching the top of the stack.
+                truths = []
+                target_states = self.get_transitions(start_state, None, stack_read)
+                for target_state in target_states:
+                    state_name = target_state[0]
+                    push_symbol = target_state[1]
+                    if push_symbol is not None:
+                        next_stack.append(push_symbol)
+
+                    this_route = [(start_state, None, state_name, stack_read, push_symbol)]
+                    truths.append(self.run_machine(target_state[0], input_string, path + this_route, next_stack))
+                if True in truths:
+                    return True
+
         return False
 
     def test_string(self, input_string):
@@ -155,14 +165,10 @@ class FAObject:
 
         return self.run_machine(self.start_state, input_string)
 
-    # To a more usable library this should be split by its function but it is useful to both read and format here
-    # print_last_path prints a human friendly readout of the last path taken through the network of all possibilities in
-    # the last test.
     def print_last_path(self):
         result = []
         step = 0
         for (start_state, input_string, target_state, consume_symbol, push_symbol) in self.last_path:
-
             step += 1
             start_string = 'start ' if step == 1 else ''
             finalize_string = ''
@@ -172,12 +178,16 @@ class FAObject:
                     finalize_string += 'accepted'
                 else:
                     finalize_string += 'rejected'
-            result.append(
-                    f"{step}: {start_string}state {start_state} takes input '{input_string}'"
-                    f" and moves to state {target_state} {finalize_string}")
+            pda_string = ""
+            if self.is_pda():
+                pda_string = f", consumes {consume_symbol}, pushes {push_symbol},"
+            line_string = f"{step}: {start_string}state {start_state} inputs '{input_string}'"+\
+                    pda_string + \
+                    f" and moves to state {target_state} {finalize_string}"
+            result.append(line_string)
         return result
 
-    def __init__(self, alphabet, all_states, start_state, accept_states, stack_alphabet=None, transitions=None, isNFA=False, is_pda=False):
+    def __init__(self, alphabet, all_states, start_state, accept_states, stack_alphabet=None, transitions=None, isNFA=False, is_pda=False, description=None):
         self.start_state = start_state
         self.accept_states = accept_states
         self.transitions = transitions or {}
@@ -188,11 +198,12 @@ class FAObject:
         self.isPDA = is_pda
         self.stack_alphabet = stack_alphabet
         self.stack = []
+        self.description = description
         # Prints the information that makes up this object. This can get pretty unreadable so we use
         # built-in json functions to prettyprint it.
 
     def __str__(self):
-        properties = {"alphabet": self.alphabet, "states": self.states, "accept_states": self.accept_states,
+        properties = {"description": self.description, "alphabet": self.alphabet, "states": self.states, "accept_states": self.accept_states,
                       "transitions": []}
 
         # I certainly hope nobody has to debug this desperate attempt to cram all this formatting into one line.
@@ -221,14 +232,25 @@ class FAFromFile(FAObject):
                 self.__init__("dfa.txt")
                 self.source = "dfa.txt"
 
-        def strip_comments(line):
-            commentIndex = line.find('//')
-            return line.strip() if commentIndex == -1 else line[0:commentIndex].strip()
+        machine_description = None
         self.source = file_path
+        lines = []
+        index = 0
         with open(file_path, 'r') as file:
-            lines = [strip_comments(line) for line in file.readlines()]
+            raw_lines = file.readlines()
+            for line in raw_lines:
+                if line.strip() == "":
+                    continue
+                comment_index = line.find('//')
+                if (comment_index is not -1) and (index == len(raw_lines)-1):
+                    machine_description = line[(comment_index+2):]
+                    continue
+                modified_line = line.strip() if comment_index == -1 else line[0:comment_index].strip()
+                # A couple of things here. Let's skip blank lines, and then lets get the comment
+                # from last line if it exists. That will be our machine description.
+                lines.append(modified_line)
+                index += 1
 
-        is_nondeterminate = False
         is_pda = False
 
         # We are going to use the index of the first occurance of "->" in lines to determine if we are reading a D/NFA or PDA
@@ -311,7 +333,7 @@ class FAFromFile(FAObject):
             c_file_index += 1
             # Transition Loop End
 
-        super().__init__(alphabet, states, start_state, accept_states, transitions=transitions, isNFA=collision, is_pda=is_pda, stack_alphabet=stack_alphabet)
+        super().__init__(alphabet, states, start_state, accept_states, transitions=transitions, isNFA=collision, is_pda=is_pda, stack_alphabet=stack_alphabet, description=machine_description)
 
 class CLIProgram:
 
