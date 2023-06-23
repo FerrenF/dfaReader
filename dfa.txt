@@ -10,3 +10,4 @@ a
 (c,1)->d
 (d,0)->d
 (d,1)->d
+// This machine accepts the language with a substring 01

@@ -260,3 +260,4 @@ q0
 (q9,x)->q9
 (q9,y)->q9
 (q9,z)->q9
+// This machine accepts a string with the word 'marmalade' somewhere within it.

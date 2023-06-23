@@ -1,6 +1,12 @@
 # Finite Automaton Reader Command Line Application
 
-This command-line application allows you to read and test strings against deterministic finite automata (DFAs) and non-deterministic finite automata (NFAs) stored in a file. It also provides functionality to track routes through the automaton.
+This command-line application allows you to read and test strings against finite automatons. It supports deterministic finite automatons (DFA), non-deterministic finite automatons (NFA), and pushdown automatons (PDA).
+
+## Caveats
+
+The alphabet can not consist of words. Only single characters may exist in the alphabet.
+
+You can push multiple symbols at once, however you cannot consume multiple symbols at once.
 
 ## Prerequisites
 
@@ -29,12 +35,6 @@ python -m venv venv
 source venv/bin/activate
 ```
 
-4. Install the required dependencies:
-
-```shell
-pip install -r requirements.txt
-```
-
 ## Usage
 
 You can use the application through the command-line interface. Available commands are:
@@ -58,7 +58,7 @@ Replace `<filename.py>` with the name of the Python file containing the code.
 
 Here are some examples of how to use the application:
 
-- Load a DFA/NFA from a file:
+- Load an automaton from a file:
 
   ```shell
   load example.txt
@@ -66,7 +66,7 @@ Here are some examples of how to use the application:
 
   Replace `example.txt` with the path to the file containing the automaton.
 
-- Test an input string against the loaded DFA/NFA:
+- Test an input string against the loaded automaton:
 
   ```shell
   test abc
@@ -74,13 +74,13 @@ Here are some examples of how to use the application:
 
   Replace `abc` with the input string you want to test.
 
-- Print the last path used to process a string through the DFA/NFA:
+- Print the last path used to process a string through the automaton:
 
   ```shell
   lastpath
   ```
 
-- Print information about the loaded DFA/NFA:
+- Print information about the loaded automaton:
 
   ```shell
   info
@@ -94,16 +94,20 @@ Here are some examples of how to use the application:
 
 ## File Format
 
-The DFA/NFA file should follow a specific format. Here is an example of the format (labels omitted):
+The automaton file should follow a specific format. Here is an example of the format (labels omitted):
 
+An example format of a simple deterministic automaton would be as follows.
+Multiple examples are included (pda.txt, marmalade.txt, and threezeros.txt)
 ```
-Alphabet:      a,b,c
-States:        q0,q1,q2,q3
+Alphabet:      {a,b,c} // Comment
+States:        {q0,q1,q2,q3}
+// A discarded line
 Start State:   q0
-Accept States: q3
+Accept States: {q3}
 Transitions:   (q0,a)->q1
                (q1,b)->q2
                (q2,c)->q3
+// The last comment is taken as a machine description.
 ```
 
 - The `Alphabet` line lists the symbols in the alphabet, separated by commas.
@@ -112,8 +116,27 @@ Transitions:   (q0,a)->q1
 - The `Accept States` line lists the accept states of the automaton, separated by commas.
 - The `Transitions` section defines the transitions between states. Each transition is specified on a separate line in the format `(source_state,input_symbol)->target_state`.
 
-Note: For NFAs, if a state has more than one possible exit for the same input symbol, simply list it as such.
+The format gets more complex for pushdown automatons:
+Examples included in pda.txt, and twoandthree.txt.
 
+```
+Alphabet:         {0,1} // Comment 
+Stack Alphabet:   {0,1}  
+States:           {q1,q2,q3,q4}
+Initial State:    q1  
+Accept States:    {q4}
+Transitions:      (q1,):(,$)->q2
+                  (q2,):($,)->q4
+// The last comment is taken as a machine description.
+```
+
+in addition to identical function above, there is one additional line that must be present for a PDA, and the formatting is extended.
+- The `Stack Alphabet` line lists the symbols in the stack alphabet, separated by commas.
+- The `Transitions` section follows the format:
+
+  `(Source_State, Input Symbol):(Consume_Symbol, Push_Symbol) -> Result_State`
+  - A consume operation is a pop operation.
+  - You may push more than one character at once, but you may only consume one character at a time.
 ## License
 
 This project is licensed under the [MIT License](LICENSE).
