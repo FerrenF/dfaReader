@@ -99,13 +99,15 @@ The automaton file should follow a specific format. Here is an example of the fo
 An example format of a simple deterministic automaton would be as follows.
 Multiple examples are included (pda.txt, marmalade.txt, and threezeros.txt)
 ```
-Alphabet:      {a,b,c}
+Alphabet:      {a,b,c} // Comment
 States:        {q0,q1,q2,q3}
+// A discarded line
 Start State:   q0
 Accept States: {q3}
 Transitions:   (q0,a)->q1
                (q1,b)->q2
                (q2,c)->q3
+// The last comment is taken as a machine description.
 ```
 
 - The `Alphabet` line lists the symbols in the alphabet, separated by commas.
@@ -115,19 +117,26 @@ Transitions:   (q0,a)->q1
 - The `Transitions` section defines the transitions between states. Each transition is specified on a separate line in the format `(source_state,input_symbol)->target_state`.
 
 The format gets more complex for pushdown automatons:
-An example is included in pda.txt. It's the same as below:
+Examples included in pda.txt, and twoandthree.txt.
 
 ```
-{0,1}  // Alphabet
-{0,1} // Stack Alphabet
-{q1,q2,q3,q4} // All States
-q1 // Initial State
-{q4} // Accept States
-(q1,):(,$)->q2 // (Source_State, Input Symbol):(Consume_Symbol, Push_Symbol) -> Result_State
-(q2,):($,)->q4 // Accepts nothing too. Straight to pre-accept state.
+Alphabet:         {0,1} // Comment 
+Stack Alphabet:   {0,1}  
+States:           {q1,q2,q3,q4}
+Initial State:    q1  
+Accept States:    {q4}
+Transitions:      (q1,):(,$)->q2
+                  (q2,):($,)->q4
+// The last comment is taken as a machine description.
 ```
-- The consume symbol is the same as a 'pop' operation on the stack.
 
+in addition to identical function above, there is one additional line that must be present for a PDA, and the formatting is extended.
+- The `Stack Alphabet` line lists the symbols in the stack alphabet, separated by commas.
+- The `Transitions` section follows the format:
+
+  `(Source_State, Input Symbol):(Consume_Symbol, Push_Symbol) -> Result_State`
+  - A consume operation is a pop operation.
+  - You may push more than one character at once, but you may only consume one character at a time.
 ## License
 
 This project is licensed under the [MIT License](LICENSE).

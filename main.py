@@ -47,7 +47,8 @@ class FAObject:
         if not stack:
             stack = list()
 
-        # We read the top of the stack in any case. If it's not a PDA, then it's None. If the stack is empty, it's none.
+        # We read the top of the stack in any case. If it's not a PDA, then it's None.
+        # If the stack is empty, it's also none.
         stack_read = stack[-1] if (self.is_pda() and len(stack) > 0) else None
 
         if len(input_string) > 0:
@@ -62,7 +63,7 @@ class FAObject:
             if self.has_transition(start_state, None, None):
                 # we have a transition for state with no input or consume.
                 # if we also push nothing, then this is an epilson transition.
-                # even if we do, we must look at the depth of recursion for a state we can repeat infinitely many times
+                # even if we do, we must be wary of infinite loops, trapped later on
                 target_jobs.append((self.get_transitions(start_state, None, None), None, None))
 
             if stack_read is not None:
@@ -106,9 +107,12 @@ class FAObject:
 
                     # Are we trapped in a loop?
                     trapped = False
+
+                    # TODO: This might need to be tuned around... extreme cases?
+                    n = 10
                     # Assuming 'n' is the number of entries to check
-                    if len(path) > 10:
-                        last_n_entries = path[-10:]  # Get the last 'n' entries from the 'paths' list
+                    if len(path) > n:
+                        last_n_entries = path[-n:]  # Get the last 'n' entries from the 'paths' list
                         # Compare each entry with the new one
                         is_equivalent = all(entry == this_route[0] for entry in last_n_entries)
                         # Check if all entries are equivalent
@@ -305,19 +309,19 @@ class FAFromFile(FAObject):
 
             destination_state = base_parts[1]
 
-            # Originally, for NFAs and DFAs we had a two-tuple for a key
+            # Originally, for NFAs and DFAs we had a two-tuple for a dictonary key: state name, and input symbol
             # With the addition of pushdown automaton processing, I decided the best way to proceed
-            # was to add the stack consume symbol into the typle for the dictionary key. In a pushdown automaton
-            # the top of the stack will always be 'read' and compared against a symbol to possibly 'consume'.
+            # was to have the values of these dictionary entries be another dictionary with the consume symbol as key.
+            # We can always set the key to None whenever a stack isn't used, or nothing is consumed, and we can move our
+            # separate chaining down a level.
 
-            # Even if we are reading a DFA/NFA without a stack - we can still put the key there and simply have
-            # it empty.
+
             if (source_state, input_symbol) in transitions:
                 # We have a hash collision and must start separate chaining destination states.
-                # This means that the object we are reading is actually an NFA, so we flag it to specify such.
+                # This means that the object we are reading is indeterminate, so we flag it to specify such.
                 if not collision:
                     print(
-                        f"non-determinate flag set due to duplicate state found at -> {source_state} : {input_symbol} on line {c_file_index} Ignoring future messages ")
+                        f"indeterminate flag set, multiple possible outputs found at at -> {source_state} : {input_symbol} on line {c_file_index} Ignoring future messages ")
                 collision = True
 
                 # Big Important decision here: We are using a dictionary whose keys are (source_state, and input_symbol)
@@ -333,6 +337,7 @@ class FAFromFile(FAObject):
             # Transition Loop End
 
         super().__init__(alphabet, states, start_state, accept_states, transitions=transitions, isNFA=collision, is_pda=is_pda, stack_alphabet=stack_alphabet, description=machine_description)
+
 
 class CLIProgram:
 
@@ -370,9 +375,10 @@ class CLIProgram:
                 print("info: Print information about the loaded DFA/NFA/PDA.")
             else:
                 print("Invalid command.")
-    def fa_label(self):
 
+    def fa_label(self):
         return str("N-" if self.dfa.is_nfa() is True else "D-") + ("PDA" if self.dfa.is_pda() is True else "FA")
+
     def load_file(self, fa):
         if not os.path.exists(fa):
             print("Error: File does not exist")
@@ -400,6 +406,7 @@ class CLIProgram:
                     self.test_function(kwargs["test"])
                 else:
                     self.start()
+
 
 if len(sys.argv) > 1:
     # We are launching from the command line with one or both parameters set.
